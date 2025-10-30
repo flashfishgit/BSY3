@@ -1,0 +1,32 @@
+output: coffeemachine_api.o coffemachine_functionality.o coffeemachine_main.o
+	gcc -o output *.o -Wall -Wextra
+
+coffeemachine_api.o: coffeemachine_api.c coffeemachine_api.h
+	gcc -c coffeemachine_api.c -Wall -Wextra
+
+coffemachine_functionality.o: coffeemachine_functionality.c coffeemachine_functionality.h
+	gcc -c coffeemachine_functionality.c -Wall -Wextra
+
+coffeemachine_main.o: coffeemachine_main.c
+	gcc -c coffeemachine_main.c -Wall -Wextra
+
+clean:
+	rm *.o output output_dbg
+
+output_dbg: coffeemachine_api.dbg.o coffeemachine_functionality.dbg.o coffeemachine_main.dbg.o
+	gcc -o output_dbg coffeemachine_api.dbg.o coffeemachine_functionality.dbg.o coffeemachine_main.dbg.o -Wall -Wextra
+
+coffeemachine_api.dbg.o: coffeemachine_api.c coffeemachine_api.h
+	gcc -c coffeemachine_api.c -g -O0 -Wall -Wextra -o coffeemachine_api.dbg.o
+
+coffeemachine_functionality.dbg.o: coffeemachine_functionality.c coffeemachine_functionality.h
+	gcc -c coffeemachine_functionality.c -g -O0 -Wall -Wextra -o coffeemachine_functionality.dbg.o
+
+coffeemachine_main.dbg.o: coffeemachine_main.c
+	gcc -c coffeemachine_main.c -g -O0 -Wall -Wextra -o coffeemachine_main.dbg.o
+
+run-debug: output_dbg
+	gdb ./output_dbg
+
+run: output
+	./output

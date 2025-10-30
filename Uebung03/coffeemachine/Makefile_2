@@ -1,0 +1,31 @@
+CC := clang
+CFLAGS := -Wall -Wextra 
+
+SRCS := $(wildcard *.c)
+
+OBJS_REL := $(SRCS:.c=.o)
+OBJS_DBG := $(SRCS:.c=.dbg.o)
+
+output: $(OBJS_REL)
+	$(CC) -o $@ $^ $(CFLAGS)
+
+output_dbg: $(OBJS_DBG)
+	$(CC) -o $@ $^ $(CFLAGS)
+
+%.o: %.c
+	$(CC)  $(CFLAGS) -g -O0 -c $< -o $@
+
+%.dbg.o: %.c
+	$(CC)  $(CFLAGS) -g -O0 -c $< -o $@
+
+
+.PHONY: clean run run-debug
+
+clean:
+	rm -f *.o *.dbg.o output output_dbg 
+
+run: output
+	./output
+
+run-debug: output_dbg
+	gdb ./output_dbg
