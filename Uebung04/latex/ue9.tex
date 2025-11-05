@@ -1,0 +1,140 @@
+\documentclass{report}
+\usepackage{pdfpages}
+\usepackage[a4paper, top=2cm, bottom=2cm, left=2cm, right=2cm]{geometry}
+\usepackage{fancyhdr}
+\usepackage{amsmath} % Für mathematische Symbole
+\usepackage{amssymb} % Für \mathbb
+\usepackage[linesnumbered,ruled]{algorithm2e} % Für Algorithmus-Umgebung
+\usepackage{ulem}
+\usepackage{xcolor}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{naive-ebnf}
+\usepackage[utf8]{inputenc}
+\usepackage[absolute,overlay]{textpos}
+\usepackage{tcolorbox}
+
+\lstdefinestyle{cppstyle}{
+    language=C++,             % Specify the language
+    basicstyle=\ttfamily,     % Set the font to typewriter
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{blue}\bfseries, % Keywords in bold blue
+    commentstyle=\color{green},         % Comments in green
+    stringstyle=\color{red},            % Strings in red
+    numbers=left,            % Line numbers on the left
+    numberstyle=\tiny\color{gray}, % Line numbers in tiny gray font
+    stepnumber=1,             % Line number step
+    breaklines=true,          % Automatic line breaking
+    tabsize=4,                % Set tab size
+    showstringspaces=false,   % Don't show spaces in strings
+    frame=single,             % Add a frame around the code
+}
+
+\newcommand{\name}{Marco Söllinger}
+\newcommand{\fach}{SEN2}
+\newcommand{\topic}{Übung 1}
+\newcommand{\uebungangabe}{Uebung1.pdf}
+
+\newcommand{\matnr}{s2410306011}
+\newcommand{\uebungsgruppe}{Gruppe 1}
+\newcommand{\aufwand}{4}
+
+
+\pagestyle{fancy}
+\normalem 
+\fancyhead[R]{Marco Söllinger}  
+
+\begin{document}
+\includepdf[pages=1,pagecommand={
+			\begin{textblock*}{5cm}(5.5cm, 6.9cm)
+				\textbf{\name}
+			\end{textblock*}
+			\begin{textblock*}{5cm}(5.5cm, 8.4cm)
+				\textbf{\matnr}
+			\end{textblock*}
+			\begin{textblock*}{5cm}(5.5cm, 9.8cm)
+				\textbf{\uebungsgruppe}
+			\end{textblock*}
+			\begin{textblock*}{5cm}(15.3cm, 6.9cm)
+				\textbf{\aufwand}
+			\end{textblock*}
+		}]{Uebung4.pdf}
+%\includepdf[pages=2-]{Uebung2.pdf}
+
+\section*{Beispiel 1}
+In dieser Aufgabe soll ein Programm erstellt werden, welches den Inhalt einer Textdatei in eine andere Textdatei kopiert werden.\\
+Dabei muessen die speziall Faelle beachtet werden:\\
+- Die Quelldatei existiert nicht.\\
+- Die Zieldatei existiert nicht(erstellen).\\
+- Argumente Anzahl stimmt nicht.\\
+- Quelldatei und Zieldatei sind identisch.\\\\
+Die Implementierung darf nur direkte Systemaufrufe verwenden (open, read, write, close, ...).\\
+Mit der Ausnahme von der string.h Bibliothek fuer String Operationen.\\\\
+
+\subsection*{1.1 Code}
+\lstinputlisting[style=cppstyle, title=\texttt{append.c} ]{../append.c}
+
+
+\subsection*{1.2 Test}
+Zum Testen wurde ein bash script erstellt, welches die verschiedenen Faelle testet.\\\\
+
+\lstinputlisting[style=cppstyle, title=\texttt{test.sh} ]{../test.sh}
+
+\begin{lstlisting}[style=cppstyle, title=\texttt{Terminal Output}]
+flashfish@fedora-4 ~/D/R/F/B/Uebung04 (main)> ./test.sh
+Run with no arguments:
+append.c:71: useage: ./append.c <inputfile> <outputfile>
+########################################
+Run with one argument:
+append.c:71: useage: ./append.c <inputfile> <outputfile>
+########################################
+Run with three argument:
+append.c:71: useage: ./append.c <inputfile> <outputfile>
+########################################
+Run with non existent input file:
+append.c:89: error in open: nonExist.txt
+########################################
+Run with a file without content (Input: test1.txt | Output: empty.txt):
+Total bytes written: 0
+########################################
+Run with indentical Input and Output file (Input: test1.txt | Output: test1.txt):
+append.c:76: error: input and output file must be different
+########################################
+Run with existent output file (Input: test2.txt | Output: output2.txt):
+Total bytes written: 21
+########################################
+Run with existent output file and appent (Input: test3.txt | Output: output3.txt):
+Total bytes written: 34
+########################################
+Run with nonexistent output file (Input: test4.txt | Output: output4.txt):
+Total bytes written: 17
+########################################
+Run with large output file (Input: test5.txt | Output: output5.txt):
+Total bytes written: 11000
+\end{lstlisting}
+
+\lstinputlisting[style=cppstyle, title=\texttt{test1.txt} ]{../test1.txt}
+
+\lstinputlisting[style=cppstyle, title=\texttt{empty.txt} ]{../empty.txt}
+
+\lstinputlisting[style=cppstyle, title=\texttt{test2.txt} ]{../test2.txt}
+
+\lstinputlisting[style=cppstyle, title=\texttt{output2.txt} ]{../output2.txt}
+
+\lstinputlisting[style=cppstyle, title=\texttt{test3.txt} ]{../test3.txt}
+
+\lstinputlisting[style=cppstyle, title=\texttt{output3.txt} ]{../output3.txt}
+
+\lstinputlisting[style=cppstyle, title=\texttt{test4.txt} ]{../test4.txt}
+
+\lstinputlisting[style=cppstyle, title=\texttt{output4.txt} ]{../output4.txt}
+
+Test5.txt und Output5.txt wurde nicht angehaengt, da es sich um eine grosse Datei handelt (11.000 Zeichen).\\
+
+
+
+
+
+\end{document}
