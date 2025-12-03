@@ -1,0 +1,26 @@
+#include  "eighdr.h"
+
+int
+main(int argc, char *argv[])
+{
+   int    i;
+   char   *tmpdir=NULL, *praefix=NULL;
+   
+   for (i=1 ; 
+        i<argc ; 
+	     i+=2) {
+      if (!strcmp(argv[i], "-t") && i+1 < argc)
+         tmpdir = argv[i+1];
+      else if (!strcmp(argv[i], "-p") && i+1 < argc)
+         praefix = argv[i+1];
+      else
+      {
+         /*fehler_meld ist eine Funktion
+         aus der Datei eighdr.h*/   
+         fehler_meld(FATAL, "usage:  %s [-t tmpdir] [-p praefix]", argv[0]);
+   }
+    
+   printf("%s\n", tempnam(tmpdir, praefix));
+   
+   exit(0);
+}

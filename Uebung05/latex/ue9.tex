@@ -39,7 +39,7 @@
 
 \newcommand{\matnr}{s2410306011}
 \newcommand{\uebungsgruppe}{Gruppe 1}
-\newcommand{\aufwand}{4}
+\newcommand{\aufwand}{2}
 
 
 \pagestyle{fancy}
@@ -60,78 +60,62 @@
 			\begin{textblock*}{5cm}(15.3cm, 6.9cm)
 				\textbf{\aufwand}
 			\end{textblock*}
-		}]{Uebung4.pdf}
-%\includepdf[pages=2-]{Uebung2.pdf}
+		}]{Uebung5.pdf}
+\includepdf[pages=2-]{Uebung5.pdf}
 
 \section*{Beispiel 1}
-In dieser Aufgabe soll ein Programm erstellt werden, welches den Inhalt einer Textdatei in eine andere Textdatei kopiert werden.\\
-Dabei muessen die speziall Faelle beachtet werden:\\
-- Die Quelldatei existiert nicht.\\
-- Die Zieldatei existiert nicht(erstellen).\\
-- Argumente Anzahl stimmt nicht.\\
-- Quelldatei und Zieldatei sind identisch.\\\\
-Die Implementierung darf nur direkte Systemaufrufe verwenden (open, read, write, close, ...).\\
-Mit der Ausnahme von der string.h Bibliothek fuer String Operationen.\\\\
+Es wird keine Lösungsidee gefordert, deshalb wurde der Code entsprechend kommentiert. \\\\
+Es ist nur darauf zu achten das speziel Fälle wie escaptes " beachtet werden müssen.\\
+Wenn das Program nicht eine ganze Zeile auf einmal auslesen kann, dann bricht es ab.\\
+Das macht die line Analyse deutlich einfacher und es sollten noramlerweise nie in einem Code 512 chars in einer Zeile sein.
 
 \subsection*{1.1 Code}
-\lstinputlisting[style=cppstyle, title=\texttt{append.c} ]{../append.c}
+\lstinputlisting[style=cppstyle, title=\texttt{ccheck.c} ]{../ccheck.c}
 
 
 \subsection*{1.2 Test}
 Zum Testen wurde ein bash script erstellt, welches die verschiedenen Faelle testet.\\\\
+Die einzelen Terminal outputs wurden in ein File geschrieben.\\
 
 \lstinputlisting[style=cppstyle, title=\texttt{test.sh} ]{../test.sh}
 
 \begin{lstlisting}[style=cppstyle, title=\texttt{Terminal Output}]
-flashfish@fedora-4 ~/D/R/F/B/Uebung04 (main)> ./test.sh
+flashfish@fedora ~/D/R/F/B/Uebung05 (main)> ./test.sh
 Run with no arguments:
-append.c:71: useage: ./append.c <inputfile> <outputfile>
+error in commandline -> ./ccheck fileName
 ########################################
-Run with one argument:
-append.c:71: useage: ./append.c <inputfile> <outputfile>
+Run with two argument:
+error in commandline -> ./ccheck fileName
 ########################################
-Run with three argument:
-append.c:71: useage: ./append.c <inputfile> <outputfile>
+Run with no existing file:
+error in fopen: No such file or directory
 ########################################
-Run with non existent input file:
-append.c:89: error in open: nonExist.txt
+Run on test_00_error.txt:
 ########################################
-Run with a file without content (Input: test1.txt | Output: empty.txt):
-Total bytes written: 0
+Run on test_01_error.txt
 ########################################
-Run with indentical Input and Output file (Input: test1.txt | Output: test1.txt):
-append.c:76: error: input and output file must be different
+Run on test_02_ok.txt
 ########################################
-Run with existent output file (Input: test2.txt | Output: output2.txt):
-Total bytes written: 21
+Test buffer overflow
+error: line buffer overflow, increase BUFFER_SIZE: Success
 ########################################
-Run with existent output file and appent (Input: test3.txt | Output: output3.txt):
-Total bytes written: 34
-########################################
-Run with nonexistent output file (Input: test4.txt | Output: output4.txt):
-Total bytes written: 17
-########################################
-Run with large output file (Input: test5.txt | Output: output5.txt):
-Total bytes written: 11000
+Run on ccheck.c
 \end{lstlisting}
 
-\lstinputlisting[style=cppstyle, title=\texttt{test1.txt} ]{../test1.txt}
+\lstinputlisting[style=cppstyle, title=\texttt{test\_00\_error.txt} ]{../test_00_error.txt}
 
-\lstinputlisting[style=cppstyle, title=\texttt{empty.txt} ]{../empty.txt}
+\lstinputlisting[style=cppstyle, title=\texttt{test\_00\_output.txt} ]{../test_00_output.txt}
 
-\lstinputlisting[style=cppstyle, title=\texttt{test2.txt} ]{../test2.txt}
+\lstinputlisting[style=cppstyle, title=\texttt{test\_01\_error.txt} ]{../test_01_error.txt}
 
-\lstinputlisting[style=cppstyle, title=\texttt{output2.txt} ]{../output2.txt}
+\lstinputlisting[style=cppstyle, title=\texttt{test\_01\_output.txt} ]{../test_01_output.txt}
 
-\lstinputlisting[style=cppstyle, title=\texttt{test3.txt} ]{../test3.txt}
+\lstinputlisting[style=cppstyle, title=\texttt{test\_02\_ok.txt} ]{../test_02_ok.txt}
 
-\lstinputlisting[style=cppstyle, title=\texttt{output3.txt} ]{../output3.txt}
+\lstinputlisting[style=cppstyle, title=\texttt{test\_02\_output.txt} ]{../test_02_output.txt}
 
-\lstinputlisting[style=cppstyle, title=\texttt{test4.txt} ]{../test4.txt}
+\lstinputlisting[style=cppstyle, title=\texttt{test\_04\_output.txt} ]{../test_04_output.txt}
 
-\lstinputlisting[style=cppstyle, title=\texttt{output4.txt} ]{../output4.txt}
-
-Test5.txt und Output5.txt wurde nicht angehaengt, da es sich um eine grosse Datei handelt (11.000 Zeichen).\\
 
 
 

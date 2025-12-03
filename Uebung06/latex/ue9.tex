@@ -1,0 +1,271 @@
+\documentclass{report}
+\usepackage{pdfpages}
+\usepackage[a4paper, top=2cm, bottom=2cm, left=2cm, right=2cm]{geometry}
+\usepackage{fancyhdr}
+\usepackage{amsmath} % Für mathematische Symbole
+\usepackage{amssymb} % Für \mathbb
+\usepackage[linesnumbered,ruled]{algorithm2e} % Für Algorithmus-Umgebung
+\usepackage{ulem}
+\usepackage{xcolor}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{naive-ebnf}
+\usepackage[utf8]{inputenc}
+\usepackage[absolute,overlay]{textpos}
+\usepackage{tcolorbox}
+
+\lstdefinestyle{cppstyle}{
+    language=C++,             % Specify the language
+    basicstyle=\ttfamily,     % Set the font to typewriter
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{blue}\bfseries, % Keywords in bold blue
+    commentstyle=\color{green},         % Comments in green
+    stringstyle=\color{red},            % Strings in red
+    numbers=left,            % Line numbers on the left
+    numberstyle=\tiny\color{gray}, % Line numbers in tiny gray font
+    stepnumber=1,             % Line number step
+    breaklines=true,          % Automatic line breaking
+    tabsize=4,                % Set tab size
+    showstringspaces=false,   % Don't show spaces in strings
+    frame=single,             % Add a frame around the code
+}
+
+\newcommand{\name}{Marco Söllinger}
+\newcommand{\fach}{SEN2}
+\newcommand{\topic}{Übung 1}
+\newcommand{\uebungangabe}{Uebung1.pdf}
+
+\newcommand{\matnr}{s2410306011}
+\newcommand{\uebungsgruppe}{Gruppe 1}
+\newcommand{\aufwand}{3}
+
+
+\pagestyle{fancy}
+\normalem 
+\fancyhead[R]{Marco Söllinger}  
+
+\begin{document}
+\includepdf[pages=1,pagecommand={
+			\begin{textblock*}{5cm}(5.5cm, 6.9cm)
+				\textbf{\name}
+			\end{textblock*}
+			\begin{textblock*}{5cm}(5.5cm, 8.4cm)
+				\textbf{\matnr}
+			\end{textblock*}
+			\begin{textblock*}{5cm}(5.5cm, 9.8cm)
+				\textbf{\uebungsgruppe}
+			\end{textblock*}
+			\begin{textblock*}{5cm}(15.3cm, 6.9cm)
+				\textbf{\aufwand}
+			\end{textblock*}
+		}]{Uebung6.pdf}
+\includepdf[pages=2-]{Uebung6.pdf}
+
+\section*{Beispiel 1}
+Es wird keine Lösungsidee gefordert, deshalb wurde der Code entsprechend kommentiert. \\\\
+Das Programm wurde mit einer Makefile kompiliert.\\
+Da in der Angabe nicht genau spezifiziert wurde, wie das Programm sich verhalten soll, wenn mehr Parameter als benötigt übergeben werden, wurde entschieden, dass die zusätzlichen Parameter ignoriert werden. \\
+Weiters Falls ein Buffer Overflow auftritt, wird eine entsprechende Fehlermeldung ausgegeben und der Buffer wird geleert. \\
+Es wird dann noch versucht die restlichen Symbole einzulesen und diese als Befehl zu interpretieren. \\\\
+Ein paar Testfaelle wurden in der main.c Datei implementiert, der Rest wurdene manuell im Terminal getestet. \\\\
+
+\subsection*{1.1 Code}
+\lstinputlisting[style=cppstyle, title=\texttt{main.c} ]{../main.c}
+\lstinputlisting[style=cppstyle, title=\texttt{CommandInterpreter.h} ]{../CommandInterpreter.h}
+\lstinputlisting[style=cppstyle, title=\texttt{CommandInterpreter.c} ]{../CommandInterpreter.c}
+\lstinputlisting[style=cppstyle, title=\texttt{CommandTable.h} ]{../CommandTable.h}
+\lstinputlisting[style=cppstyle, title=\texttt{CommandTable.c} ]{../CommandTable.c}
+
+
+
+\subsection*{1.2 Test}
+Es wurden folgende Testfälle implementiert und ausgeführt:
+
+
+\begin{lstlisting}[style=cppstyle, title=\texttt{Terminal Output}]
+flashfish@fedora ~/D/R/F/B/Uebung06 (main)> make run
+./CommandInterpreter
+Must initialize module before use!
+Must initialize module before use!
+Error in Init(...) -> null pointer given for command table
+Must initialize module before use!
+Must initialize module before use!
+Error in Init(...) -> null pointer given for put-char-function
+Must initialize module before use!
+Must initialize module before use!
+Welcome Command-Interpreter
+>help
+help 
+(press <ESC> to exit)
+available commands:
+help: show help text
+?: show help text
+string: [value] first parameter as string
+int: [value] first parameter as integer
+float: [value] first parameter as float
+addint: [value1] + [value1] adds two integer values
+OK
+>?
+? 
+(press <ESC> to exit)
+available commands:
+help: show help text
+?: show help text
+string: [value] first parameter as string
+int: [value] first parameter as integer
+float: [value] first parameter as float
+addint: [value1] + [value1] adds two integer values
+OK
+>int 123
+int 123 
+Parameter: 123
+OK
+>float 3.14
+float 3.14 
+Parameter: 3.14
+OK
+>addint 3 4
+addint 3 4 
+Result: 7
+OK
+>int 123 123
+int 123 123 
+Parameter: 123
+OK
+>float 123 123
+float 123 123 
+Parameter: 123
+OK
+>addint 5
+addint 5 
+ERROR
+>addint
+addint 
+ERROR
+>int
+int 
+ERROR
+>float
+float 
+ERROR
+>help 475
+help 475 
+(press <ESC> to exit)
+available commands:
+help: show help text
+?: show help text
+string: [value] first parameter as string
+int: [value] first parameter as integer
+float: [value] first parameter as float
+addint: [value1] + [value1] adds two integer values
+OK
+>adf
+adf 
+Unknown command!
+
+>
+\end{lstlisting}
+
+
+\begin{lstlisting}[style=cppstyle, title=\texttt{Terminal Output}]
+flashfish@fedora ~/D/R/F/B/Uebung06 (main)> make run
+./CommandInterpreter
+Must initialize module before use!
+Must initialize module before use!
+Error in Init(...) -> null pointer given for command table
+Must initialize module before use!
+Must initialize module before use!
+Error in Init(...) -> null pointer given for put-char-function
+Must initialize module before use!
+Must initialize module before use!
+Welcome Command-Interpreter
+>BufferOverflowTest1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890
+Input buffer overflow! Max input length exceeded.
+Input buffer overflow! Max input length exceeded.
+Input buffer overflow! Max input length exceeded.
+xyz1234567890 
+Unknown command!
+
+>
+\end{lstlisting}
+
+
+\begin{lstlisting}[style=cppstyle, title=\texttt{Terminal Output}]
+flashfish@fedora ~/D/R/F/B/Uebung06 (main) [SIGINT]> make run
+./CommandInterpreter
+Must initialize module before use!
+Must initialize module before use!
+Error in Init(...) -> null pointer given for command table
+Must initialize module before use!
+Must initialize module before use!
+Error in Init(...) -> null pointer given for put-char-function
+Must initialize module before use!
+Must initialize module before use!
+Welcome Command-Interpreter
+>int 1Param 2Param 3Param 4Param 5Param 6Param 7Param 8Param 9Param 10Param 11Param 12Param 13Param 14Param 15Param 16Param 17Param 18Param 19Param 20Param
+Input buffer overflow! Max input length exceeded.
+m 18Param 19Param 20Param 
+Unknown command!
+
+>
+\end{lstlisting}
+
+\begin{lstlisting}[style=cppstyle, title=\texttt{Terminal Output}]
+flashfish@fedora ~/D/R/F/B/Uebung06 (main)> make run
+clang  -Wall -Wextra -c CommandTable.c -o build/CommandTable.o
+clang -g -o CommandInterpreter build/CommandInterpreter.o build/CommandTable.o build/main.o -lm
+./CommandInterpreter
+Must initialize module before use!
+Must initialize module before use!
+Error in Init(...) -> null pointer given for command table
+Must initialize module before use!
+Must initialize module before use!
+Error in Init(...) -> null pointer given for put-char-function
+Must initialize module before use!
+Must initialize module before use!
+Welcome Command-Interpreter
+>    int 325
+int 325
+Parameter: 325
+OK
+>int 		345
+int 345
+Parameter: 345
+OK
+>int Ha345
+int Ha345
+ERROR
+>int 352Hal
+int 352Hal
+ERROR
+>float 3h3
+float 3h3
+ERROR
+>float 3.0
+float 3.0
+Parameter: 3.0
+OK
+>string Hallo353
+string Hallo353
+Parameter: Hallo353
+OK
+>string 343
+string 343
+Parameter: 343
+OK
+>addint 34h 3
+addint 34h 3
+ERROR
+>add int 3 3h
+add int 3 3h
+Unknown command!
+
+>addint 3 3h
+addint 3 3h
+ERROR
+>
+\end{lstlisting}
+
+\end{document}

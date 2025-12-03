@@ -1,0 +1,320 @@
+    1: { 0} ( 0) /* 0*/ | #include <assert.h>
+    2: { 0} ( 0) /* 0*/ | #include <memory.h>
+    3: { 0} ( 0) /* 0*/ | #include <stdbool.h>
+    4: { 0} ( 0) /* 0*/ | #include <stdio.h>
+    5: { 0} ( 0) /* 0*/ | #include <stdlib.h>
+    6: { 0} ( 0) /* 0*/ | #include <string.h>
+    7: { 0} ( 0) /* 0*/ | 
+    8: { 0} ( 0) /* 0*/ | #define BUFFER_SIZE 128
+    9: { 0} ( 0) /* 0*/ | 
+   10: { 0} ( 0) /* 0*/ | // ----------------- Debug Macros ----------------
+   11: { 0} ( 0) /* 0*/ | // #define DEBUG
+   12: { 0} ( 0) /* 0*/ | // Enable debug output when DEBUG is defined
+   13: { 0} ( 0) /* 0*/ | #ifdef DEBUG
+   14: { 0} ( 0) /* 0*/ | 
+   15: { 0} ( 0) /* 0*/ | // cyan
+   16: { 0} ( 0) /* 0*/ | #define DBG_COLOR "\x1b[36m"
+   17: { 0} ( 0) /* 0*/ | #define DBG_RESET "\x1b[0m"
+   18: { 0} ( 0) /* 0*/ | 
+   19: { 0} ( 0) /* 0*/ | #define DEBUG_LOG(fmt, ...)                                                    \
+   20: { 1} ( 0) /* 0*/ |   do {                                                                         \
+   21: { 1} ( 1) /* 0*/ |     fprintf(stderr, DBG_COLOR "[DEBUG] %s:%d:%s(): " fmt DBG_RESET "\n",       \
+   22: { 1} ( 0) /* 0*/ |             __FILE__, __LINE__, __func__, ##__VA_ARGS__);                      \
+   23: { 0} ( 0) /* 0*/ |   } while (0)
+   24: { 0} ( 0) /* 0*/ | #else
+   25: { 0} ( 0) /* 0*/ | #define DEBUG_LOG(...)                                                         \
+   26: { 1} ( 0) /* 0*/ |   do {                                                                         \
+   27: { 0} ( 0) /* 0*/ |   } while (0)
+   28: { 0} ( 0) /* 0*/ | #endif
+   29: { 0} ( 0) /* 0*/ | // ----------------- End Debug Macros ----------------
+   30: { 0} ( 0) /* 0*/ | 
+   31: { 0} ( 0) /* 0*/ | // ------------------ Error Messages ----------------
+   32: { 0} ( 0) /* 0*/ | static char const *const cErrOpen = "error in fopen";
+   33: { 0} ( 0) /* 0*/ | static char const *const cErrClose = "error in fclose";
+   34: { 0} ( 0) /* 0*/ | static char const *const cErrRead = "error in fgets";
+   35: { 0} ( 0) /* 0*/ | static char const *const cErrUsage =
+   36: { 0} ( 0) /* 0*/ |     "error in commandline -> ./ccheck fileName\n";
+   37: { 0} ( 0) /* 0*/ | static char const *const cErrLineBufferOverflow =
+   38: { 0} ( 0) /* 0*/ |     "error: line buffer overflow, increase BUFFER_SIZE";
+   39: { 0} ( 0) /* 0*/ | // ------------------ End Error Messages ----------------
+   40: { 0} ( 0) /* 0*/ | 
+   41: { 0} ( 0) /* 0*/ | // -------------------  typedef ----------------
+   42: { 1} ( 0) /* 0*/ | typedef struct {
+   43: { 1} ( 0) /* 0*/ |   int depth_curly; // {}
+   44: { 1} ( 0) /* 0*/ |   int depth_round; // ()
+   45: { 1} ( 0) /* 0*/ |   int depth_comment;
+   46: { 1} ( 0) /* 0*/ |   unsigned int line_number;
+   47: { 1} ( 0) /* 0*/ |   bool in_block_comment;
+   48: { 1} ( 0) /* 0*/ |   bool in_line_comment;
+   49: { 1} ( 0) /* 0*/ |   bool in_string;
+   50: { 1} ( 0) /* 0*/ |   bool in_char;
+   51: { 1} ( 0) /* 0*/ |   bool depth_curly_was_negative;
+   52: { 1} ( 0) /* 0*/ |   bool depth_round_was_negative;
+   53: { 1} ( 0) /* 0*/ |   bool depth_comment_was_negative;
+   54: { 1} ( 0) /* 0*/ |   bool esc;
+   55: { 0} ( 0) /* 0*/ | } State;
+   56: { 0} ( 0) /* 0*/ | 
+   57: { 1} ( 0) /* 0*/ | typedef enum {
+   58: { 1} ( 0) /* 0*/ |   SKIP_LINE = -1,
+   59: { 1} ( 0) /* 0*/ |   SKIP_NONE = 0,
+   60: { 1} ( 0) /* 0*/ |   SKIP_1_CHAR = 1,
+   61: { 1} ( 0) /* 0*/ |   SKIP_2_CHAR = 2,
+   62: { 0} ( 0) /* 0*/ | } skipResult;
+   63: { 0} ( 0) /* 0*/ | 
+   64: { 1} ( 0) /* 0*/ | typedef enum {
+   65: { 1} ( 0) /* 0*/ |   CHR_NONE = 0,
+   66: { 1} ( 0) /* 0*/ |   CHR_BLOCK_COMMENT_START,
+   67: { 1} ( 0) /* 0*/ |   CHR_BLOCK_COMMENT_END,
+   68: { 1} ( 0) /* 0*/ |   CHR_LINE_COMMENT,
+   69: { 1} ( 0) /* 0*/ |   CHR_STRING,
+   70: { 1} ( 0) /* 0*/ |   CHR_CHAR,
+   71: { 1} ( 0) /* 0*/ |   CHR_ESC,
+   72: { 1} ( 0) /* 0*/ |   CHR_CURLEY_OPEN,
+   73: { 1} ( 0) /* 0*/ |   CHR_CURLEY_CLOSE,
+   74: { 1} ( 0) /* 0*/ |   CHR_ROUND_OPEN,
+   75: { 1} ( 0) /* 0*/ |   CHR_ROUND_CLOSE,
+   76: { 0} ( 0) /* 0*/ | } CharType;
+   77: { 0} ( 0) /* 0*/ | // ------------------- End typedef ----------------
+   78: { 0} ( 0) /* 0*/ | 
+   79: { 0} ( 0) /* 0*/ | // ------------------- static Functions ----------------
+   80: { 0} ( 0) /* 0*/ | 
+   81: { 0} ( 0) /* 0*/ | // checks if the current state allows skipping characters
+   82: { 0} ( 0) /* 0*/ | // and when in such a state, returns how many characters to skip
+   83: { 0} ( 0) /* 0*/ | // Also checks for exiting such states
+   84: { 1} ( 0) /* 0*/ | static skipResult checkIfCanSkip(State *state, char chr, char next_char) {
+   85: { 1} ( 0) /* 0*/ |   assert(state != NULL);
+   86: { 1} ( 0) /* 0*/ | 
+   87: { 2} ( 0) /* 0*/ |   if (state->in_line_comment) {
+   88: { 2} ( 0) /* 0*/ |     DEBUG_LOG("In line comment, skipping rest of line");
+   89: { 2} ( 0) /* 0*/ |     return SKIP_LINE;
+   90: { 1} ( 0) /* 0*/ |   }
+   91: { 1} ( 0) /* 0*/ | 
+   92: { 2} ( 0) /* 0*/ |   if (state->in_block_comment) {
+   93: { 3} ( 0) /* 0*/ |     if (chr == '*' && next_char == '/') {
+   94: { 3} ( 0) /* 0*/ |       DEBUG_LOG("Exiting block comment");
+   95: { 3} ( 0) /* 0*/ |       state->in_block_comment = false;
+   96: { 3} ( 0) /* 0*/ |       state->depth_comment--;
+   97: { 3} ( 0) /* 0*/ |       return SKIP_2_CHAR;
+   98: { 2} ( 0) /* 0*/ |     }
+   99: { 2} ( 0) /* 0*/ |     return SKIP_1_CHAR;
+  100: { 1} ( 0) /* 0*/ |   }
+  101: { 1} ( 0) /* 0*/ | 
+  102: { 2} ( 0) /* 0*/ |   if (state->in_string) {
+  103: { 3} ( 0) /* 0*/ |     if (chr == '"' && !state->esc) {
+  104: { 3} ( 0) /* 0*/ |       DEBUG_LOG("Exiting string literal");
+  105: { 3} ( 0) /* 0*/ |       state->in_string = false;
+  106: { 3} ( 0) /* 0*/ |       return SKIP_1_CHAR;
+  107: { 2} ( 0) /* 0*/ |     }
+  108: { 2} ( 0) /* 0*/ |     state->esc = (chr == '\\' && !state->esc);
+  109: { 2} ( 0) /* 0*/ |     return SKIP_1_CHAR;
+  110: { 1} ( 0) /* 0*/ |   }
+  111: { 1} ( 0) /* 0*/ | 
+  112: { 2} ( 0) /* 0*/ |   if (state->in_char) {
+  113: { 3} ( 0) /* 0*/ |     if (chr == '\'' && !state->esc) {
+  114: { 3} ( 0) /* 0*/ |       DEBUG_LOG("Exiting char literal");
+  115: { 3} ( 0) /* 0*/ |       state->in_char = false;
+  116: { 3} ( 0) /* 0*/ |       return SKIP_1_CHAR;
+  117: { 2} ( 0) /* 0*/ |     }
+  118: { 2} ( 0) /* 0*/ |     state->esc = (chr == '\\' && !state->esc);
+  119: { 2} ( 0) /* 0*/ |     return SKIP_1_CHAR;
+  120: { 1} ( 0) /* 0*/ |   }
+  121: { 1} ( 0) /* 0*/ | 
+  122: { 1} ( 0) /* 0*/ |   return SKIP_NONE;
+  123: { 0} ( 0) /* 0*/ | }
+  124: { 0} ( 0) /* 0*/ | 
+  125: { 0} ( 0) /* 0*/ | // process a single line and update the state accordingly
+  126: { 1} ( 0) /* 0*/ | static void process_line(char const *const line, State *state) {
+  127: { 2} ( 0) /* 0*/ |   if (line == NULL || state == NULL) {
+  128: { 2} ( 0) /* 0*/ |     return;
+  129: { 1} ( 0) /* 0*/ |   }
+  130: { 1} ( 0) /* 0*/ | 
+  131: { 1} ( 0) /* 0*/ |   size_t i = 0;
+  132: { 1} ( 0) /* 0*/ |   // while loop so it is clear that increamenting i is done manually
+  133: { 2} ( 0) /* 0*/ |   while (line[i] != '\0') {
+  134: { 2} ( 0) /* 0*/ |     char chr = line[i];
+  135: { 2} ( 0) /* 0*/ |     char next_c = line[i + 1]; // never undefined, as \0 must exist after chr
+  136: { 2} ( 0) /* 0*/ | 
+  137: { 2} ( 0) /* 0*/ |     // check if we can skip characters due to current state
+  138: { 2} ( 0) /* 0*/ |     // also handles exiting states
+  139: { 2} ( 0) /* 0*/ |     skipResult skip = checkIfCanSkip(state, chr, next_c);
+  140: { 3} ( 0) /* 0*/ |     if (skip == SKIP_LINE) {
+  141: { 3} ( 0) /* 0*/ |       break;
+  142: { 2} ( 0) /* 0*/ |     }
+  143: { 3} ( 0) /* 0*/ |     if (skip == SKIP_2_CHAR) {
+  144: { 3} ( 0) /* 0*/ |       i += 2;
+  145: { 3} ( 0) /* 0*/ |       continue;
+  146: { 2} ( 0) /* 0*/ |     }
+  147: { 3} ( 0) /* 0*/ |     if (skip == SKIP_1_CHAR) {
+  148: { 3} ( 0) /* 0*/ |       i += 1;
+  149: { 3} ( 0) /* 0*/ |       continue;
+  150: { 2} ( 0) /* 0*/ |     }
+  151: { 2} ( 0) /* 0*/ | 
+  152: { 2} ( 0) /* 0*/ |     // check for entering states or updating depths
+  153: { 3} ( 0) /* 0*/ |     switch (chr) {
+  154: { 3} ( 0) /* 0*/ |     case '/':
+  155: { 4} ( 0) /* 0*/ |       if (next_c == '*') {
+  156: { 4} ( 0) /* 0*/ |         DEBUG_LOG("Entering block comment at index %zu", i);
+  157: { 4} ( 0) /* 0*/ |         state->in_block_comment = true;
+  158: { 4} ( 0) /* 0*/ |         state->depth_comment++;
+  159: { 4} ( 0) /* 0*/ |         i += 2;
+  160: { 4} ( 0) /* 0*/ |         continue;
+  161: { 3} ( 0) /* 0*/ |       }
+  162: { 4} ( 0) /* 0*/ |       if (next_c == '/') {
+  163: { 4} ( 0) /* 0*/ |         DEBUG_LOG("Entering line comment at index %zu", i);
+  164: { 4} ( 0) /* 0*/ |         state->in_line_comment = true;
+  165: { 4} ( 0) /* 0*/ |         // Dont need to increas i since line stops
+  166: { 3} ( 0) /* 0*/ |       }
+  167: { 3} ( 0) /* 0*/ |       break;
+  168: { 3} ( 0) /* 0*/ |     case '*':
+  169: { 3} ( 0) /* 0*/ |       // This state can only be reached if not in block comment and */ comes
+  170: { 3} ( 0) /* 0*/ |       // This Implies an error
+  171: { 4} ( 0) /* 0*/ |       if (next_c == '/') {
+  172: { 4} ( 0) /* 0*/ |         DEBUG_LOG("Exiting block comment at index %zu", i);
+  173: { 4} ( 0) /* 0*/ |         state->in_block_comment = false;
+  174: { 4} ( 0) /* 0*/ |         state->depth_comment--;
+  175: { 4} ( 0) /* 0*/ |         i += 2;
+  176: { 4} ( 0) /* 0*/ |         continue;
+  177: { 3} ( 0) /* 0*/ |       }
+  178: { 3} ( 0) /* 0*/ |       break;
+  179: { 3} ( 0) /* 0*/ |     case '"':
+  180: { 3} ( 0) /* 0*/ |       DEBUG_LOG("Entering string literal at index %zu", i);
+  181: { 3} ( 0) /* 0*/ |       state->in_string = true;
+  182: { 3} ( 0) /* 0*/ |       state->esc = false;
+  183: { 3} ( 0) /* 0*/ |       break;
+  184: { 3} ( 0) /* 0*/ |     case '\'':
+  185: { 3} ( 0) /* 0*/ |       DEBUG_LOG("Entering char literal at index %zu", i);
+  186: { 3} ( 0) /* 0*/ |       state->in_char = true;
+  187: { 3} ( 0) /* 0*/ |       break;
+  188: { 3} ( 0) /* 0*/ |     case '{':
+  189: { 3} ( 0) /* 0*/ |       DEBUG_LOG("Entering '{' at index %zu", i);
+  190: { 3} ( 0) /* 0*/ |       state->depth_curly++;
+  191: { 3} ( 0) /* 0*/ |       break;
+  192: { 3} ( 0) /* 0*/ |     case '}':
+  193: { 3} ( 0) /* 0*/ |       DEBUG_LOG("Exiting '}' at index %zu", i);
+  194: { 3} ( 0) /* 0*/ |       state->depth_curly--;
+  195: { 3} ( 0) /* 0*/ |       break;
+  196: { 3} ( 0) /* 0*/ |     case '(':
+  197: { 3} ( 0) /* 0*/ |       DEBUG_LOG("Entering '(' at index %zu", i);
+  198: { 3} ( 0) /* 0*/ |       state->depth_round++;
+  199: { 3} ( 0) /* 0*/ |       break;
+  200: { 3} ( 0) /* 0*/ |     case ')':
+  201: { 3} ( 0) /* 0*/ |       DEBUG_LOG("Found ')' at index %zu", i);
+  202: { 3} ( 0) /* 0*/ |       state->depth_round--;
+  203: { 3} ( 0) /* 0*/ |       break;
+  204: { 3} ( 0) /* 0*/ |     default:
+  205: { 3} ( 0) /* 0*/ |       break;
+  206: { 2} ( 0) /* 0*/ |     }
+  207: { 2} ( 0) /* 0*/ | 
+  208: { 2} ( 0) /* 0*/ |     i += 1;
+  209: { 2} ( 0) /* 0*/ | 
+  210: { 2} ( 0) /* 0*/ |     // check here so negative depths are recorded even if multiple in one line
+  211: { 3} ( 0) /* 0*/ |     if (state->depth_curly < 0) {
+  212: { 3} ( 0) /* 0*/ |       state->depth_curly_was_negative = true;
+  213: { 2} ( 0) /* 0*/ |     }
+  214: { 3} ( 0) /* 0*/ |     if (state->depth_round < 0) {
+  215: { 3} ( 0) /* 0*/ |       state->depth_round_was_negative = true;
+  216: { 2} ( 0) /* 0*/ |     }
+  217: { 3} ( 0) /* 0*/ |     if (state->depth_comment < 0) {
+  218: { 3} ( 0) /* 0*/ |       state->depth_comment_was_negative = true;
+  219: { 2} ( 0) /* 0*/ |     }
+  220: { 1} ( 0) /* 0*/ |   }
+  221: { 0} ( 0) /* 0*/ | }
+  222: { 0} ( 0) /* 0*/ | 
+  223: { 0} ( 0) /* 0*/ | // prints the end state of the parser
+  224: { 1} ( 0) /* 0*/ | static void print_EndState(State const *const state) {
+  225: { 2} ( 0) /* 0*/ |   if (state == NULL) {
+  226: { 2} ( 0) /* 0*/ |     return;
+  227: { 1} ( 0) /* 0*/ |   }
+  228: { 1} ( 0) /* 0*/ |   printf("---------------------------------\n");
+  229: { 2} ( 0) /* 0*/ |   if (state->depth_curly != 0) {
+  230: { 2} ( 0) /* 0*/ |     printf("    - Geschweifte Klammern { } nicht ausgeglichen\n");
+  231: { 1} ( 0) /* 0*/ |   }
+  232: { 2} ( 0) /* 0*/ |   if (state->depth_round != 0) {
+  233: { 2} ( 0) /* 0*/ |     printf("    - Runde Klammern ( ) nicht ausgeglichen\n");
+  234: { 1} ( 0) /* 0*/ |   }
+  235: { 2} ( 0) /* 0*/ |   if (state->depth_comment != 0) {
+  236: { 2} ( 0) /* 0*/ |     printf("    - Blockkommentare /* */ nicht ausgeglichen\n");
+  237: { 1} ( 0) /* 0*/ |   }
+  238: { 2} ( 0) /* 0*/ |   if (state->depth_curly_was_negative) {
+  239: { 2} ( 0) /* 0*/ |     printf("    - Warning: Geschweifte Klammern waren einmal negative\n");
+  240: { 1} ( 0) /* 0*/ |   }
+  241: { 2} ( 0) /* 0*/ |   if (state->depth_round_was_negative) {
+  242: { 2} ( 0) /* 0*/ |     printf("    - Warning: Runde Klammern waren einmal negative\n");
+  243: { 1} ( 0) /* 0*/ |   }
+  244: { 2} ( 0) /* 0*/ |   if (state->depth_comment_was_negative) {
+  245: { 2} ( 0) /* 0*/ |     printf("    - Warning: Blockkommentare waren einmal negative\n");
+  246: { 1} ( 0) /* 0*/ |   }
+  247: { 1} ( 0) /* 0*/ | 
+  248: { 1} ( 1) /* 0*/ |   if (state->depth_curly == 0 && state->depth_round == 0 &&
+  249: { 1} ( 1) /* 0*/ |       state->depth_comment == 0 && !state->depth_curly_was_negative &&
+  250: { 2} ( 0) /* 0*/ |       !state->depth_round_was_negative && !state->depth_comment_was_negative) {
+  251: { 2} ( 0) /* 0*/ |     printf("    - Alles ausgeglichen!\n");
+  252: { 1} ( 0) /* 0*/ |   }
+  253: { 0} ( 0) /* 0*/ | }
+  254: { 0} ( 0) /* 0*/ | 
+  255: { 0} ( 0) /* 0*/ | // ------------------- End static Functions ----------------
+  256: { 0} ( 0) /* 0*/ | 
+  257: { 1} ( 0) /* 0*/ | int main(int argc, char *argv[]) {
+  258: { 2} ( 0) /* 0*/ |   if (argc != 2) {
+  259: { 2} ( 0) /* 0*/ |     printf(cErrUsage);
+  260: { 2} ( 0) /* 0*/ |     DEBUG_LOG("Invalid number of arguments: %d", argc - 1);
+  261: { 2} ( 0) /* 0*/ |     return EXIT_FAILURE;
+  262: { 1} ( 0) /* 0*/ |   }
+  263: { 1} ( 0) /* 0*/ |   DEBUG_LOG("Given File %s", argv[1]);
+  264: { 1} ( 0) /* 0*/ | 
+  265: { 1} ( 0) /* 0*/ |   FILE *inputfile = fopen(argv[1], "r");
+  266: { 2} ( 0) /* 0*/ |   if (inputfile == NULL) {
+  267: { 2} ( 0) /* 0*/ |     perror(cErrOpen);
+  268: { 2} ( 0) /* 0*/ |     DEBUG_LOG("Could not open file %s", argv[1]);
+  269: { 2} ( 0) /* 0*/ |     return EXIT_FAILURE;
+  270: { 1} ( 0) /* 0*/ |   }
+  271: { 1} ( 0) /* 0*/ | 
+  272: { 1} ( 0) /* 0*/ |   char line[BUFFER_SIZE];
+  273: { 1} ( 0) /* 0*/ |   State state = {0};
+  274: { 2} ( 0) /* 0*/ |   while (fgets(line, sizeof(line), inputfile) != NULL) {
+  275: { 2} ( 0) /* 0*/ |     char *truncated = strchr(line, '\n');
+  276: { 2} ( 0) /* 0*/ | 
+  277: { 2} ( 0) /* 0*/ |     // when it was not possible to load the complete line into the buffer
+  278: { 2} ( 0) /* 0*/ |     // cancle program since general line length should not be over 512
+  279: { 2} ( 0) /* 0*/ |     // In a programm
+  280: { 2} ( 0) /* 0*/ |     // Correctly handling line feeds would require handling a lot of edge cases
+  281: { 2} ( 0) /* 0*/ |     // like /<bufferend overflow>/ or similar
+  282: { 3} ( 0) /* 0*/ |     if (truncated == NULL) {
+  283: { 3} ( 0) /* 0*/ |       perror(cErrLineBufferOverflow);
+  284: { 3} ( 0) /* 0*/ |       DEBUG_LOG("Line buffer overflow detected");
+  285: { 3} ( 0) /* 0*/ |       fclose(inputfile); // dont check in error state
+  286: { 3} ( 0) /* 0*/ |       return EXIT_FAILURE;
+  287: { 2} ( 0) /* 0*/ |     }
+  288: { 2} ( 0) /* 0*/ | 
+  289: { 2} ( 0) /* 0*/ |     // update state based on line content
+  290: { 2} ( 0) /* 0*/ |     process_line(line, &state);
+  291: { 2} ( 0) /* 0*/ | 
+  292: { 2} ( 0) /* 0*/ |     state.in_line_comment = false; // reset line comment at EOL
+  293: { 2} ( 0) /* 0*/ |     // Remove newline character for cleaner output
+  294: { 2} ( 0) /* 0*/ |     *truncated = '\0';
+  295: { 2} ( 0) /* 0*/ |     state.line_number++;
+  296: { 2} ( 0) /* 0*/ | 
+  297: { 2} ( 1) /* 0*/ |     printf("%5d: {%2d} (%2d) /*%2d*/ | %s\n", state.line_number,
+  298: { 2} ( 0) /* 0*/ |            state.depth_curly, state.depth_round, state.depth_comment, line);
+  299: { 1} ( 0) /* 0*/ |   }
+  300: { 1} ( 0) /* 0*/ |   // check if reading ended because of eof or error
+  301: { 2} ( 0) /* 0*/ |   if (!feof(inputfile) && ferror(inputfile)) {
+  302: { 2} ( 0) /* 0*/ |     perror(cErrRead);
+  303: { 2} ( 0) /* 0*/ |     DEBUG_LOG("Error occurred while reading file %s", argv[1]);
+  304: { 2} ( 0) /* 0*/ |     fclose(inputfile); // check for fclose error
+  305: { 1} ( 0) /* 0*/ |   }
+  306: { 1} ( 0) /* 0*/ | 
+  307: { 1} ( 0) /* 0*/ |   // print final state
+  308: { 1} ( 0) /* 0*/ |   print_EndState(&state);
+  309: { 1} ( 0) /* 0*/ | 
+  310: { 1} ( 0) /* 0*/ |   // close file and check for error
+  311: { 2} ( 0) /* 0*/ |   if (fclose(inputfile) != 0) {
+  312: { 2} ( 0) /* 0*/ |     perror(cErrClose);
+  313: { 2} ( 0) /* 0*/ |     DEBUG_LOG("Could not close file %s", argv[1]);
+  314: { 2} ( 0) /* 0*/ |     return EXIT_FAILURE;
+  315: { 1} ( 0) /* 0*/ |   }
+  316: { 1} ( 0) /* 0*/ | 
+  317: { 1} ( 0) /* 0*/ |   return EXIT_SUCCESS;
+  318: { 0} ( 0) /* 0*/ | }
+---------------------------------
+    - Alles ausgeglichen!

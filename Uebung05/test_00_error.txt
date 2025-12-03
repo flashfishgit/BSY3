@@ -1,0 +1,73 @@
+{
+  {
+ 
+  }
+}
+
+(
+  (
+
+  )
+)
+
+/*
+  /*
+  (
+  {
+  // (
+  \{
+  }
+  )
+  */
+*/
+
+/* 
+)
+*/
+
+}
+  }
+
+  {
+{
+
+)
+  )
+
+  (
+(
+
+/*/ 
+( This is a string
+*/
+
+"("
+
+"\" This is still string ) "
+
+"\\" This is no string ( 
+)
+
+/* ( // { */ ( // }
+)
+
+This is allowed sind multi line strings exist
+" This is a multi line string
+   with a parenthesis )
+   and a backslash \\ {
+"
+
+{{ 
+}}
+
+((
+))
+
+"\{"
+")"
+
+"//" ( 
+)
+
+\( 
+\)
