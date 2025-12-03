@@ -1,0 +1,164 @@
+\documentclass{report}
+\usepackage{pdfpages}
+\usepackage[a4paper, top=2cm, bottom=2cm, left=2cm, right=2cm]{geometry}
+\usepackage{fancyhdr}
+\usepackage{amsmath} % Für mathematische Symbole
+\usepackage{amssymb} % Für \mathbb
+\usepackage[linesnumbered,ruled]{algorithm2e} % Für Algorithmus-Umgebung
+\usepackage{ulem}
+\usepackage{xcolor}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{naive-ebnf}
+\usepackage[utf8]{inputenc}
+\usepackage[absolute,overlay]{textpos}
+\usepackage{tcolorbox}
+
+\lstdefinestyle{cppstyle}{
+    language=C++,             % Specify the language
+    basicstyle=\ttfamily,     % Set the font to typewriter
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{blue}\bfseries, % Keywords in bold blue
+    commentstyle=\color{green},         % Comments in green
+    stringstyle=\color{red},            % Strings in red
+    numbers=left,            % Line numbers on the left
+    numberstyle=\tiny\color{gray}, % Line numbers in tiny gray font
+    stepnumber=1,             % Line number step
+    breaklines=true,          % Automatic line breaking
+    tabsize=4,                % Set tab size
+    showstringspaces=false,   % Don't show spaces in strings
+    frame=single,             % Add a frame around the code
+}
+
+\newcommand{\name}{Marco Söllinger}
+\newcommand{\fach}{SEN2}
+\newcommand{\topic}{Übung 1}
+\newcommand{\uebungangabe}{Uebung1.pdf}
+
+\newcommand{\matnr}{s2410306011}
+\newcommand{\uebungsgruppe}{Gruppe 1}
+\newcommand{\aufwand}{3}
+
+
+\pagestyle{fancy}
+\normalem 
+\fancyhead[R]{Marco Söllinger}  
+
+\begin{document}
+\includepdf[pages=1,pagecommand={
+			\begin{textblock*}{5cm}(5.5cm, 6.9cm)
+				\textbf{\name}
+			\end{textblock*}
+			\begin{textblock*}{5cm}(5.5cm, 8.4cm)
+				\textbf{\matnr}
+			\end{textblock*}
+			\begin{textblock*}{5cm}(5.5cm, 9.8cm)
+				\textbf{\uebungsgruppe}
+			\end{textblock*}
+			\begin{textblock*}{5cm}(15.3cm, 6.9cm)
+				\textbf{\aufwand}
+			\end{textblock*}
+		}]{Uebung7.pdf}
+\includepdf[pages=2-]{Uebung7.pdf}
+
+\section*{Beispiel 1}
+Es wird keine Lösungsidee gefordert, deshalb wurde der Code entsprechend kommentiert. \\\\
+Das Programm wurde mit einer Makefile kompiliert.\\
+Fuer das Testen wurde ein testscript erstellt, welches die verschiedenen Befehle testet.\\\\
+
+
+\subsection*{1.1 Code}
+\lstinputlisting[style=cppstyle, title=\texttt{main.c} ]{../main.c}
+
+\subsection*{1.2 Test}
+Es wurden folgende Testfälle implementiert und ausgeführt:
+
+\lstinputlisting[style=cppstyle, title=\texttt{testscript.sh} ]{../testscript.sh}
+
+\begin{lstlisting}[style=cppstyle, title=\texttt{Terminal Output}]
+flashfish@fedora ~/D/R/F/B/Uebung07 (main)> ./testscript.sh
+clang  -Wall -Wextra -c main.c -o build/main.o
+clang -g -o Verzeichnisbaum build/main.o -lm
+==> Starte Testlaufe fuer readDir
+
+---------------------------------------------
+TEST 0: Invalid Call (kein Argument)(2 Args)
+---------------------------------------------
+Usage: ./Verzeichnisbaum <directory>
+
+Usage: ./Verzeichnisbaum <directory>
+
+---------------------------------------------
+TEST 1: Standardverhalten - aktuelles Verzeichnis
+---------------------------------------------
+[/home/flashfish/Documents/Repo/FH/BSY3/Uebung07/]
+|---[latex/]
+| |---[Uebung7.pdf]
+| |---[ue9.aux]
+| |---[ue9.fdb_latexmk]
+| |---[ue9.log]
+| |---[ue9.pdf]
+| |---[ue9.tex]
+| |---[ue9.fls]
+| |---[ue9.synctex.gz]
+|---[Makefile]
+|---[build/]
+| |---[main.o]
+|---[main.c]
+|---[testscript.sh]
+|---[Verzeichnisbaum]
+|---[test_readDir_env/]
+
+---------------------------------------------
+TEST 2: Leeres Verzeichnis
+---------------------------------------------
+[/home/flashfish/Documents/Repo/FH/BSY3/Uebung07/test_readDir_env/empty/]
+
+---------------------------------------------
+TEST 3: Verzeichnis mit Dateien und Unterverzeichnissen
+---------------------------------------------
+[/home/flashfish/Documents/Repo/FH/BSY3/Uebung07/test_readDir_env/mixed/]
+|---[a.txt]
+|---[b.bin]
+|---[subdir/]
+
+---------------------------------------------
+TEST 4: Nicht-existierendes Verzeichnis
+---------------------------------------------
+chdir (Zielverzeichnis): No such file or directory
+Fehler: Pfad 'test_readDir_env/does_not_exist' wurde nicht gefunden.
+
+---------------------------------------------
+TEST 5: Pfad zeigt auf Datei statt Verzeichnis
+---------------------------------------------
+chdir (Zielverzeichnis): Not a directory
+Fehler: 'test_readDir_env/file.txt' ist kein Verzeichnis.
+
+---------------------------------------------
+TEST 6: Verzeichnis ohne Leserechte (r-Bit fehlt)
+---------------------------------------------
+[/home/flashfish/Documents/Repo/FH/BSY3/Uebung07/test_readDir_env/noread/]
+opendir: Permission denied
+
+---------------------------------------------
+TEST 7: Verzeichnis ohne Execute-Rechte (x-Bit fehlt)
+---------------------------------------------
+chdir (Zielverzeichnis): Permission denied
+Fehler: Keine Berechtigung, um 'test_readDir_env/nosearch' zu betreten.
+
+---------------------------------------------
+TEST 8: Sehr langer Pfad
+---------------------------------------------
+Laenge des erzeugten Pfads: 4095 (PATH_MAX ~ 4096)
+Aufruf: ./Verzeichnisbaum "test_readDir_env/longpath/subdir_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx/ ... {I removed the rest of the path so that it fits here} ... /subdir_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx/"
+getcwd (Zielverzeichnis): Numerical result out of range
+Fehler: Laenge des Zielverzeichnispfads ist groesser als PATH_MAX (4096).
+
+---------------------------------------------
+TESTS FERTIG
+---------------------------------------------
+\end{lstlisting}
+
+\end{document}
